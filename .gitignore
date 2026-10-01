@@ -1,3 +1,5 @@
 /target
 /vendor
+/build
+/dist
 .flatpak-builder

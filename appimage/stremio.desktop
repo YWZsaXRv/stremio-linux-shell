@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Stremio
+GenericName=Media Center
+Comment=Freedom To Stream
+Exec=stremio %u
+Icon=stremio
+Terminal=false
+Categories=AudioVideo;Video;Player;Utility;
+Keywords=Stremio;Media;Play;Stream;
+MimeType=x-scheme-handler/stremio;
+StartupNotify=true
+StartupWMClass=stremio-linux-shell

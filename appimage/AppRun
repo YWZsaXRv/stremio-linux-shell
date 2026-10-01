@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# launcher do appimage do stremio
+#
+# o appimage traz o binário, o node.js e o server.js. o webkitgtk 6.0 e o
+# resto da stack gtk 4 ficam por conta do sistema.
+#
+set -eu
+
+# o runtime do appimage exporta o appdir. se estiver rodando de uma pasta
+# extraída, uso a pasta deste script.
+if [ -z "${APPDIR:-}" ]; then
+    APPDIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+
+# renderizador gl na nvidia
+# o upstream também força o gl quando acha a nvidia, porque o auto-detect
+# nem sempre acerta. o nome certo no gtk 4.22 é "gl", "opengl" também
+# funciona e o único depreciado é "ngl".
+if [ -e /dev/nvidia0 ]; then
+    export GSK_RENDERER="${GSK_RENDERER:-gl}"
+fi
+
+# node que vem dentro do appimage
+export PATH="$APPDIR/usr/bin:$PATH"
+
+# o servidor do stremio
+export SERVER_PATH="$APPDIR/usr/share/stremio/server.js"
+
+# schema do gsettings que vai junto no appimage
+export GSETTINGS_SCHEMA_DIR="$APPDIR/usr/share/glib-2.0/schemas${GSETTINGS_SCHEMA_DIR:+:$GSETTINGS_SCHEMA_DIR}"
+
+# traduções, quando existirem
+export TEXTDOMAINDIR="$APPDIR/usr/share/locale"
+
+# checando o webkitgtk 6.0 no sistema
+# ele não vai empacotado de propósito: os processos auxiliares dele são
+# procurados num caminho fixo (/usr/lib/webkitgtk-6.0), então precisa vir
+# do sistema.
+if [ ! -e /usr/lib/libwebkitgtk-6.0.so.4 ] && \
+   ! ldconfig -p 2>/dev/null | grep -q 'libwebkitgtk-6\.0\.so\.4'; then
+    {
+        echo "O Stremio precisa do WebKitGTK 6.0 instalado no sistema."
+        echo
+        echo "  Arch:     sudo pacman -S webkitgtk-6.0"
+        echo "  Debian:   sudo apt install libwebkitgtk-6.0-4"
+        echo "  Fedora:   sudo dnf install webkitgtk6.0"
+        echo "  openSUSE: sudo zypper install libwebkitgtk6_0-4"
+        echo
+    } >&2
+    exit 1
+fi
+
+exec "$APPDIR/usr/bin/stremio" "$@"
